@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Emergency Contact Management System</title>
+
+<style>
+/* ===== RESET ===== */
+/* Show Password Eye */
+.logoutTop {
+  position:absolute;
+  top:15px;
+  right:20px;
+  width:auto;
+  padding:6px 14px;
+  font-size:13px;
+  background:linear-gradient(135deg,#ff4d4d,#ff0000);
+}
+
+#closeTermsBtn{
+     position:absolute;
+      top:10px;
+      right:10px;
+      width:28px;
+      height:28px;
+      font-size:16px;
+      background:red;
+      color:#fff;
+      border:none;
+      border-radius:50%;
+      cursor:pointer;
+      line-height:16px;
+      padding:0;
+}
+#termsModal {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+#termsModal.hidden {
+  display:none;
+}
+
+.termsContent {
+  background:#fff;
+  color:#000;
+  padding:25px;
+  border-radius:12px;
+  width:80%;
+  max-width:600px;
+  max-height:80%;
+  overflow-y:auto;
+  position:relative;
+}
+
+.termsContent h2 {
+  text-align:center;
+}
+
+.termsContent button {
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:red;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:4px 8px;
+  cursor:pointer;
+}
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center; /* vertical center of input and eye */
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px; /* space for eye inside box */
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.toggle-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #333;
+  user-select: none;
+}
+
+*{
+ box-sizing:border-box;
+ font-family:'Segoe UI', Tahoma, sans-serif;
+ margin:0;
+ padding:0;
+}
+
+body{
+ min-height:100vh;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ background:
+ linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
+ url("maxresdefault.jpg");
+ background-size:cover;
+ background-position:center;
+ background-repeat:no-repeat;
+}
+
+.container{
+ display:flex;
+ width:820px;
+ border-radius:18px;
+ overflow:hidden;
+ backdrop-filter:blur(18px);
+ background:rgba(255,255,255,0.15);
+ border:1px solid rgba(255,255,255,0.25);
+ box-shadow:0 25px 60px rgba(0,0,0,0.4);
+ color:#fff;
+}
+
+.schoolPanel{
+ width:40%;
+ background:rgba(0,0,0,0.25);
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ padding:20px;
+}
+
+.schoolTable{ width:100%; text-align:center; }
+
+.schoolPanel img{ width:120px; margin-bottom:10px; }
+
+.schoolName{ font-size:22px; font-weight:700; }
+.schoolSub{ opacity:.9; }
+.systemTitle{ font-size:14px; opacity:.8; }
+
+.formPanel{ 
+  width:60%; 
+  padding:35px; 
+  position:relative;
+}
+
+#loginPage input{ width:85%; display:block; margin:8px auto; padding:10px; font-size:13px; }
+#loginPage button{ width:85%; margin:auto; display:block; }
+
+h2{ text-align:center; margin-bottom:18px; font-weight:600; }
+input,button,select{ width:100%; padding:12px; margin:7px 0; border-radius:10px; border:none; outline:none; font-size:14px; }
+input{ background:rgba(255,255,255,0.9); color:#333; }
+input::placeholder{ color:#777; }
+button{ background:linear-gradient(135deg,#00d4ff,#5b8cff); color:#fff; font-weight:600; cursor:pointer; transition:.25s; box-shadow:0 6px 18px rgba(0,0,0,0.2); }
+button:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,0.3); }
+.hidden{ display:none; }
+.list{ background:rgba(255,255,255,0.2); padding:12px; margin-top:10px; border-radius:12px; backdrop-filter:blur(10px); }
+.smallBtn{ width:auto; padding:6px 12px; margin-top:6px; font-size:12px; }
+.deleteBtn{ background:linear-gradient(135deg,#ff4d4d,#ff0000); }
+.updateBtn{ background:linear-gradient(135deg,#00c853,#00e676); }
+.popup{ position:fixed; top:20px; right:20px; background:#00c853; color:#fff; padding:14px 20px; border-radius:12px; display:none; font-weight:600; }
+.loader{ position:fixed; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; color:#fff; font-size:22px; font-weight:600; }
+.checkbox-container{ display:flex; align-items:center; margin:12px 0; font-size:13px; }
+.checkbox-container input{ width:auto; margin-right:8px; }
+.role-checkboxes{ display:flex; justify-content:space-around; margin:12px 0; }
+.welcome{ text-align:center; margin-bottom:22px; font-size:1.4em; font-weight:600; }
+a{ color:#fff; font-weight:600; } a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">Processing...</div>
+<div id="popupMessage" class="popup"></div>
+
+<div class="container">
+
+<!-- LEFT -->
+<div class="schoolPanel">
+<table class="schoolTable">
+<tr><td><img src="b.png"></td></tr>
+<tr><td class="schoolName">JOSE ABAD SANTOS</td></tr>
+<tr><td class="schoolSub">Senior High School</td></tr>
+<tr><td class="systemTitle">Emergency Contact System</td></tr>
+</table>
+</div>
+
+<!-- RIGHT -->
+<div class="formPanel">
+
+<!-- LOGIN -->
+<div id="loginPage">
+<h2>Login</h2>
+<input type="text" id="loginUser" placeholder="Username">
+<div class="password-wrapper">
+  <input type="password" id="loginPass" placeholder="Password">
+  <span class="toggle-eye" onclick="togglePassword('loginPass', this)">👁</span>
+</div>
+<button onclick="login()">Login</button>
+<p style="text-align:center;margin-top:10px">
+No account? <a href="#" onclick="showRegister()">Register</a></p>
+<p style="text-align:center"><a href="#" onclick="showForgotPassword()">Forgot Password?</a></p>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div id="forgotPasswordPage" class="hidden">
+<h2>Forgot Password</h2>
+<input type="text" id="forgotUser" placeholder="Enter your gmail account">
+<button onclick="resetPassword()">Reset Password</button>
+<div id="resetSection" class="hidden">
+<div class="password-wrapper">
+<input type="password" id="newPass" placeholder="New Password">
+<span class="toggle-eye" onclick="togglePassword('newPass', this)">👁</span>
+</div>
+<button onclick="updatePassword()">Update Password</button>
+</div>
+<button onclick="showLogin()" class="secondaryBtn">Back to Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="registerPage" class="hidden">
+<h2>Register</h2>
+<input type="text" id="lastName" placeholder="Last Name" required>
+<input type="text" id="firstName" placeholder="First Name" required>
+<input type="text" id="middleName" placeholder="Middle Name">
+<input type="text" id="suffix" placeholder="Suffix (e.g., Jr., Sr.)">
+<input type="text" id="preferredUsername" placeholder="Preferred Username" required>
+<input type="email" id="regEmail" placeholder="Gmail Account (@gmail.com)" required>
+<!-- Password -->
+<div class="password-wrapper">
+  <input type="password" id="regPass" placeholder="Password" required>
+  <span class="toggle-eye" onclick="togglePassword('regPass', this)">👁</span>
+</div>
+
+<!-- Confirm Password -->
+<div class="password-wrapper">
+  <input type="password" id="confirmPass" placeholder="Confirm Password" required>
+  <span class="toggle-eye" onclick="togglePassword('confirmPass', this)">👁</span>
+</div>
+
+<div class="role-checkboxes">
+<label><input type="checkbox" id="studentCheck" onclick="toggleRole('student')"> Student</label>
+<label><input type="checkbox" id="teacherCheck" onclick="toggleRole('teacher')"> Teacher</label>
+</div>
+
+<div class="checkbox-container">
+  <input type="checkbox" id="termsAgree">
+  <label for="termsAgree">
+    I agree to 
+    <span style="color:#00d4ff; cursor:pointer; text-decoration:underline;" 
+          onclick="showTermsModal()">Terms & Privacy</span>
+  </label>
+</div>
+
+<button onclick="register()">Register</button>
+<button onclick="showLogin()" class="secondaryBtn">Return to Login</button>
+</div>
+
+<!-- STUDENT PAGE -->
+<div id="studentPage" class="hidden">
+  <button onclick="logout()" class="logoutTop">Logout</button>
+  <div class="welcome">Welcome, <span id="welcomeUser"></span>!</div>
+  <h2>Student Contact</h2>
+
+  <!-- Wrap all input fields in a container -->
+  <div id="studentFormInputs">
+    <input type="text" id="studentName" placeholder="Student Name">
+    <input type="email" id="studentEmail" placeholder="Student Email">
+    <input type="text" id="studentPhone" placeholder="Student Phone">
+    <input type="text" id="parentName" placeholder="Parent Name">
+    <input type="email" id="parentEmail" placeholder="Parent Email">
+    <input type="text" id="parentPhone" placeholder="Parent Phone">
+    <input type="text" id="adviserName" placeholder="Adviser Username">
+
+    <div class="checkbox-container">
+      <input type="checkbox" id="termsAgreeStudent">
+      <label for="termsAgreeStudent">
+        I agree to 
+        <span style="color:#00d4ff; cursor:pointer; text-decoration:underline;" 
+              onclick="showTermsModal()">Terms & Privacy</span>
+      </label>
+    </div>
+    <button onclick="confirmSubmit()">Submit</button>
+  </div>
+
+  <!-- Adviser Info Display -->
+  <div id="adviserInfo"></div>
+</div>
+
+<!-- TEACHER PAGE -->
+<div id="teacherPage" class="hidden">
+  <button onclick="logout()" class="logoutTop">Logout</button>
+  <div class="welcome">Welcome, <span id="welcomeUserTeacher"></span>!</div>
+  <h2>Teacher Dashboard</h2>
+
+  <!-- Wrap teacher contact input fields -->
+  <div id="teacherFormInputs">
+    <input type="text" id="teacherName" placeholder="Full Name">
+    <input type="email" id="teacherEmail" placeholder="Email">
+    <input type="text" id="teacherPhone" placeholder="Phone Number">
+    <div class="checkbox-container">
+      <input type="checkbox" id="termsAgreeTeacher">
+      <label for="termsAgreeTeacher">
+        I agree to 
+        <span style="color:#00d4ff; cursor:pointer; text-decoration:underline;" 
+              onclick="showTermsModal()">Terms & Privacy</span>
+      </label>
+    </div>
+    <button onclick="confirmTeacherSubmit()">Submit</button>
+  </div>
+
+  <h3 style="margin-top:15px">My Students</h3>
+  <input type="text" id="searchStudent" placeholder="Search student by name..." 
+         onkeyup="renderStudents()" 
+         style="margin-bottom:8px;">
+  <select id="sortOption" onchange="renderStudents()" style="margin-bottom:10px;">
+    <option value="az">Sort Name A - Z</option>
+    <option value="za">Sort Name Z - A</option>
+  </select>
+  <div style="max-height:300px; overflow-y:auto; border-radius:12px;">
+    <table id="studentTable" style="width:100%; background:rgba(255,255,255,0.2); border-collapse:collapse;">
+      <thead style="background:rgba(0,0,0,0.3); position:sticky; top:0;">
+        <tr>
+          <th style="padding:8px;">Student Name</th>
+          <th style="padding:8px;">Phone</th>
+          <th style="padding:8px;">Email</th>
+          <th style="padding:8px;">Parent</th>
+          <th style="padding:8px;">Parent Phone</th>
+          <th style="padding:8px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="studentList"></tbody>
+    </table>
+  </div>
+</div>
+
+
+</div> <!-- formPanel -->
+</div> <!-- container -->
+
+<script>
+/* ===== DOM ELEMENTS ===== */
+const loginPage = document.getElementById("loginPage");
+const registerPage = document.getElementById("registerPage");
+const forgotPasswordPage = document.getElementById("forgotPasswordPage");
+const resetSection = document.getElementById("resetSection");
+const popupMessage = document.getElementById("popupMessage");
+const loader = document.getElementById("loader");
+
+const lastName = document.getElementById("lastName");
+const firstName = document.getElementById("firstName");
+const middleName = document.getElementById("middleName");
+const suffix = document.getElementById("suffix");
+const preferredUsername = document.getElementById("preferredUsername");
+const regEmail = document.getElementById("regEmail");
+const regPass = document.getElementById("regPass");
+const confirmPass = document.getElementById("confirmPass");
+const termsAgree = document.getElementById("termsAgree");
+const studentCheck = document.getElementById("studentCheck");
+const teacherCheck = document.getElementById("teacherCheck");
+
+const loginUser = document.getElementById("loginUser");
+const loginPass = document.getElementById("loginPass");
+
+const studentName = document.getElementById("studentName");
+const studentEmail = document.getElementById("studentEmail");
+const studentPhone = document.getElementById("studentPhone");
+const parentName = document.getElementById("parentName");
+const parentEmail = document.getElementById("parentEmail");
+const parentPhone = document.getElementById("parentPhone");
+const adviserName = document.getElementById("adviserName");
+const termsAgreeStudent = document.getElementById("termsAgreeStudent");
+const adviserInfo = document.getElementById("adviserInfo");
+
+const teacherName = document.getElementById("teacherName");
+const teacherEmail = document.getElementById("teacherEmail");
+const teacherPhone = document.getElementById("teacherPhone");
+const termsAgreeTeacher = document.getElementById("termsAgreeTeacher");
+const studentList = document.getElementById("studentList");
+const welcomeUser = document.getElementById("welcomeUser");
+const welcomeUserTeacher = document.getElementById("welcomeUserTeacher");
+
+/* ===== DATA ===== */
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let studentContacts = JSON.parse(localStorage.getItem("studentContacts")) || [];
+let teacherContacts = JSON.parse(localStorage.getItem("teacherContacts")) || [];
+let currentUser = null;
+let editIndex = null;
+
+/* ===== FUNCTIONS ===== */
+function showRegister(){ loginPage.classList.add("hidden"); registerPage.classList.remove("hidden"); }
+function showLogin(){ registerPage.classList.add("hidden"); forgotPasswordPage.classList.add("hidden"); loginPage.classList.remove("hidden"); }
+function showForgotPassword(){ loginPage.classList.add("hidden"); forgotPasswordPage.classList.remove("hidden"); resetSection.classList.add("hidden"); }
+function logout(){ location.reload(); }
+
+function showPopup(msg){ popupMessage.innerText=msg; popupMessage.style.display="block"; setTimeout(()=>popupMessage.style.display="none",2000); }
+function showLoader(){ loader.style.display="flex"; setTimeout(()=>loader.style.display="none",1000); }
+function toggleRole(role){ if(role==='student'){ teacherCheck.checked=false; } else{ studentCheck.checked=false; } }
+
+function register(){
+
+ if(!termsAgree.checked) return showPopup("Please agree first");
+
+ if(!lastName.value||!firstName.value||!preferredUsername.value||!regPass.value||(!studentCheck.checked&&!teacherCheck.checked))
+ return showPopup("Complete all required fields");
+
+ if(regPass.value !== confirmPass.value)
+  return showPopup("Passwords do not match");
+
+ // 🔹 RE-CHECK CONFIRMATION
+ let choice = confirm("Do you want to re-check your registration information?\n\nPress OK to RE-CHECK\nPress Cancel to CONTINUE");
+
+ if(choice){
+   showPopup("Please review your registration details.");
+   return;
+ }
+
+ let finalConfirm = confirm("Are you sure you want to create this account?");
+ if(!finalConfirm) return;
+
+ let role = studentCheck.checked?'student':'teacher';
+ let fullName = `${lastName.value}, ${firstName.value}${middleName.value?' '+middleName.value:''}${suffix.value?' '+suffix.value:''}`;
+
+ users.push({ 
+  username:preferredUsername.value, 
+  email:regEmail.value.trim().toLowerCase(),
+  password:regPass.value,
+  role, 
+  fullName 
+ });
+
+ localStorage.setItem("users",JSON.stringify(users));
+
+ showPopup("Registered Successfully");
+ showLogin();
+}
+
+function login(){
+  let user = users.find(u => u.username === loginUser.value && u.password === loginPass.value);
+  if(!user) return showPopup("Invalid Login");
+  
+  currentUser = user;
+  loginPage.classList.add("hidden");
+
+  if(user.role === "student"){
+    studentPage.classList.remove("hidden");
+    welcomeUser.innerText = currentUser.username;
+
+    let submitted = studentContacts.find(s => s.username === currentUser.username);
+    if(submitted){
+      // Hide form inputs
+      document.getElementById("studentFormInputs").classList.add("hidden");
+      // Show adviser info
+      showAdviserInfo();
+    }
+  } else {
+    teacherPage.classList.remove("hidden");
+    welcomeUserTeacher.innerText = currentUser.username;
+    renderStudents();
+  }
+if(user.role === "teacher"){
+  teacherPage.classList.remove("hidden");
+  welcomeUserTeacher.innerText = currentUser.username;
+
+  let submitted = teacherContacts.find(t => t.username === currentUser.username);
+  if(submitted){
+    // Hide teacher input form after submission
+    document.getElementById("teacherFormInputs").classList.add("hidden");
+  }
+  
+  renderStudents();
+}}
+
+function resetPassword(){
+ let email = forgotUser.value.trim().toLowerCase();
+
+ if(!email.endsWith("@gmail.com")){
+   return showPopup("Please enter a valid Gmail account (@gmail.com)");
+   
+ }
+
+ let user = users.find(u => u.email === email);
+ if(!user){
+   return showPopup("Google account not found");
+ }
+
+ resetSection.classList.remove("hidden");
+}
+
+function updatePassword(){
+ if(!newPass.value) return showPopup("Enter new password");
+
+ let email = forgotUser.value.trim().toLowerCase();
+ let idx = users.findIndex(u => u.email === email);
+
+ if(idx === -1) return showPopup("Account not found");
+
+ users[idx].password = newPass.value;
+
+ localStorage.setItem("users", JSON.stringify(users));
+ showPopup("Password updated");
+ showLogin();
+}
+
+function confirmSubmit(){
+  let choice = confirm("Do you want to re-check your information?\n\nPress OK to RE-CHECK\nPress Cancel to CONTINUE");
+
+  if(choice){
+    showPopup("Please review your information before submitting.");
+    return;
+  }
+
+  let finalConfirm = confirm("Are you sure you want to continue submitting?");
+  if(finalConfirm){
+    saveStudent();
+  }
+}
+function confirmTeacherSubmit(){
+  let choice = confirm("Do you want to re-check your information?\n\nPress OK to RE-CHECK\nPress Cancel to CONTINUE");
+
+  if(choice){
+    showPopup("Please review your information before submitting.");
+    return;
+  }
+
+  let finalConfirm = confirm("Are you sure you want to continue submitting?");
+  if(finalConfirm){
+    saveTeacher();
+  }
+}
+
+function saveStudent(){
+ if(!termsAgreeStudent.checked) return showPopup("Please agree first");
+
+ showLoader();
+
+ // IF EDITING EXISTING STUDENT
+ if(editIndex !== null){
+   let choice = confirm("Do you want to re-check your updated information?\n\nPress OK to RE-CHECK\nPress Cancel to CONTINUE");
+
+   if(choice){
+     showPopup("Please review your updated information.");
+     return;
+   }
+
+   let finalConfirm = confirm("Are you sure you want to update this student?");
+   if(!finalConfirm) return;
+
+   studentContacts[editIndex] = {
+     username: studentContacts[editIndex].username,
+     studentName: studentName.value,
+     studentEmail: studentEmail.value,
+     studentPhone: studentPhone.value,
+     parentName: parentName.value,
+     parentEmail: parentEmail.value,
+     parentPhone: parentPhone.value,
+     adviser: adviserName.value
+   };
+
+   localStorage.setItem("studentContacts", JSON.stringify(studentContacts));
+   showPopup("Student Updated Successfully");
+   editIndex = null;
+   renderStudents();
+   return;
+ }
+
+ // IF NEW SUBMISSION
+ if(studentContacts.find(s=>s.username===currentUser.username))
+   return showPopup("Already Submitted");
+
+ studentContacts.push({
+  username:currentUser.username,
+  studentName:studentName.value,
+  studentEmail:studentEmail.value,
+  studentPhone:studentPhone.value,
+  parentName:parentName.value,
+  parentEmail:parentEmail.value,
+  parentPhone:parentPhone.value,
+  adviser:adviserName.value
+ });
+
+ localStorage.setItem("studentContacts",JSON.stringify(studentContacts));
+ showPopup("Contact Submitted");
+ showAdviserInfo();
+}
+function showAdviserInfo(){
+  let student = studentContacts.find(s => s.username === currentUser.username);
+  if(!student) return;
+
+  let teacher = teacherContacts.find(t => t.username === student.adviser);
+  if(!teacher) return;
+
+  adviserInfo.innerHTML = `<div class="list">
+    Adviser: ${teacher.fullName}<br>
+    Phone: ${teacher.phone}
+  </div>`;
+}
+
+function saveTeacher(){
+  if(!termsAgreeTeacher.checked) return showPopup("Please agree first");
+
+  // Prevent duplicate submission
+  if(teacherContacts.find(t => t.username === currentUser.username)){
+    showPopup("You already submitted your info");
+    document.getElementById("teacherFormInputs").classList.add("hidden");
+    return;
+  }
+
+  teacherContacts.push({
+    username: currentUser.username,
+    fullName: teacherName.value,
+    email: teacherEmail.value,
+    phone: teacherPhone.value
+  });
+
+  localStorage.setItem("teacherContacts", JSON.stringify(teacherContacts));
+  showPopup("Saved Successfully");
+
+  // Hide form after submission
+  document.getElementById("teacherFormInputs").classList.add("hidden");
+
+  renderStudents();
+}
+
+function renderStudents(){
+ studentList.innerHTML="";
+
+ studentContacts
+ .filter(s=>s.adviser===currentUser.username)
+ .forEach((s,index)=>{
+
+ studentList.innerHTML += `
+   <tr style="text-align:center; background:rgba(255,255,255,0.1);">
+     <td style="padding:6px;">${s.studentName}</td>
+     <td style="padding:6px;">${s.studentPhone}</td>
+     <td style="padding:6px;">${s.studentEmail}</td>
+     <td style="padding:6px;">${s.parentName}</td>
+     <td style="padding:6px;">${s.parentPhone}</td>
+     <td style="padding:6px;">${s.parentEmail}</td>
+     <td style="padding:6px;">
+       <button class="smallBtn updateBtn" onclick="editStudent(${index})">Edit</button>
+       <button class="smallBtn deleteBtn" onclick="confirmDelete(${index})">Delete</button>
+     </td>
+   </tr>
+ `;
+ });
+}
+
+function editStudent(index){
+ let s=studentContacts[index];
+ studentName.value=s.studentName;
+ studentEmail.value=s.studentEmail;
+ studentPhone.value=s.studentPhone;
+ parentName.value=s.parentName;
+ parentEmail.value=s.parentEmail;
+ parentPhone.value=s.parentPhone;
+ adviserName.value=s.adviser;
+ editIndex=index;
+}
+
+function confirmDelete(index){ if(confirm("Delete this student?")) deleteStudent(index); }
+
+function deleteStudent(index){
+ studentContacts.splice(index,1);
+ localStorage.setItem("studentContacts",JSON.stringify(studentContacts));
+ showPopup("Deleted Successfully");
+ renderStudents();
+}
+function togglePassword(id, eye){
+ let input = document.getElementById(id);
+
+ if(input.type === "password"){
+   input.type = "text";
+   eye.innerText = "🙈";
+ } else {
+   input.type = "password";
+   eye.innerText = "👁";
+ }}
+function showTermsModal(){
+  document.getElementById("termsModal").classList.remove("hidden");
+}
+
+// Close Terms & Privacy modal
+function closeTerms(){
+  document.getElementById("termsModal").classList.add("hidden");
+}
+
+// Assign close button click AFTER DOM loads
+document.addEventListener("DOMContentLoaded", () => {
+  const closeBtn = document.getElementById("closeTermsBtn");
+  if(closeBtn){
+    closeBtn.addEventListener("click", closeTerms);
+  }
+});
+function renderStudents(){
+  if(currentUser.role !== "teacher") return;
+
+  let searchInput = document.getElementById("searchStudent");
+  let sortOption = document.getElementById("sortOption");
+
+  let searchValue = searchInput ? searchInput.value.toLowerCase() : "";
+  let sortValue = sortOption ? sortOption.value : "az";
+
+  // Filter students assigned to the current teacher
+  let filtered = studentContacts
+      .filter(s => s.adviser === currentUser.username)
+      .filter(s => s.studentName.toLowerCase().includes(searchValue));
+
+  // Sorting
+  filtered.sort((a,b) => sortValue === "az" ? a.studentName.localeCompare(b.studentName)
+                                            : b.studentName.localeCompare(a.studentName));
+
+  studentList.innerHTML = "";
+
+  filtered.forEach(s => {
+    studentList.innerHTML += `
+    <tr style="text-align:center; background:rgba(255,255,255,0.1);">
+      <td style="padding:6px;">${s.studentName}</td>
+      <td style="padding:6px;">${s.studentPhone}</td>
+      <td style="padding:6px;">${s.studentEmail}</td>
+      <td style="padding:6px;">${s.parentName}</td>
+      <td style="padding:6px;">${s.parentPhone}</td>
+      <td style="padding:6px;">
+        <button class="smallBtn updateBtn" onclick="editStudent(${studentContacts.indexOf(s)})">Edit</button>
+        <button class="smallBtn deleteBtn" onclick="confirmDelete(${studentContacts.indexOf(s)})">Delete</button>
+      </td>
+    </tr>
+    `;
+  });
+}
+
+</script>
+<div id="termsModal" class="hidden">
+  <div class="termsContent">
+    <h2>Terms of Agreement & Privacy Policy</h2>
+    <p>
+      1. Users must provide accurate personal information when registering.<br>
+      2. All credentials must be kept secure and confidential.<br>
+      3. Student and teacher contact information is used only for emergency purposes.<br>
+      4. The system may store user data to communicate in emergency situations.<br>
+      5. Users must respect other users’ privacy and not misuse data.<br>
+      6. By registering, you agree to follow all rules and regulations of the school and system.<br>
+      Any of this rules violate by user, your account will be suspended or banned right away. <br>
+    PS :If anyone use your information to harm or scam the system will surely file a legal case to the suspect.
+    </p>
+    <button id="closeTermsBtn">X</button>
+  </div>
+</div>
+</body>
+</html>
